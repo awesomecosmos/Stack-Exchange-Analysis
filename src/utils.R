@@ -51,7 +51,7 @@ plot_top_tag_per_year <- function(df,df.x,df.y,df.fill,dataset_name,n){
 
 # function to plot line chart of top n tags over time
 plot_top_n_tags_by_year <- function(df,df.x,df.y,df.group,df.color,dataset_name,n){
-  plot <- ggplot(top_n_tags_by_year, aes(x = year, y = num_tags, group = IndivTags, color = IndivTags)) + 
+  plot <- ggplot(df, aes(x = df.x, y = df.y, group = df.group, color = df.color)) + 
     geom_line() +
     labs(title = paste0("Top ",n," Tags for ",dataset_name," Over Time"), x = "tag", y = "frequency",
          color = "Tag")
