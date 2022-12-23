@@ -3,6 +3,7 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(ggplot2)
+library(here)
 
 # function to read all csv files and return files and filenames
 dataset_reader <- function(path){
@@ -31,7 +32,7 @@ clean_df <- function(raw_df){
 }
 
 # function to plot bar plot of top N tags
-plot_top_n_tags_by_count <- function(df,df.x,df.y,dataset_name){
+plot_top_n_tags_by_count <- function(df,df.x,df.y,dataset_name,n){
   plot <- ggplot(df, aes(x = reorder(df.x, -df.y), y = df.y)) + 
     geom_col(fill = "blueviolet") + 
     labs(title = paste0("Top ",n," Tags for ",dataset_name), x = "tag", y = "frequency") +
@@ -40,7 +41,7 @@ plot_top_n_tags_by_count <- function(df,df.x,df.y,dataset_name){
 }
 
 # function to plot bar plot of top tag per year
-plot_top_tag_per_year <- function(df,df.x,df.y,df.fill,dataset_name){
+plot_top_tag_per_year <- function(df,df.x,df.y,df.fill,dataset_name,n){
   plot <- ggplot(df, aes(x = df.x, y = df.y, fill = df.fill)) + 
     geom_col() +
     labs(title = paste0("Top Yearly Tag for ",dataset_name), x = "tag", y = "frequency",
@@ -49,7 +50,7 @@ plot_top_tag_per_year <- function(df,df.x,df.y,df.fill,dataset_name){
 }
 
 # function to plot line chart of top n tags over time
-plot_top_n_tags_by_year <- function(df,df.x,df.y,df.group,df.color,dataset_name){
+plot_top_n_tags_by_year <- function(df,df.x,df.y,df.group,df.color,dataset_name,n){
   plot <- ggplot(top_n_tags_by_year, aes(x = year, y = num_tags, group = IndivTags, color = IndivTags)) + 
     geom_line() +
     labs(title = paste0("Top ",n," Tags for ",dataset_name," Over Time"), x = "tag", y = "frequency",

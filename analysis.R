@@ -30,7 +30,7 @@ tags_by_count <- df %>%
 top_n_tags_by_count <- tags_by_count[1:n,]
 
 plot_top_n_tags_by_count(top_n_tags_by_count, top_n_tags_by_count$IndivTags, 
-                         top_n_tags_by_count$num_tags, dataset_name)
+                         top_n_tags_by_count$num_tags, dataset_name,n)
 
 # bar plot of top tag of each year
 top_tag_per_year <- df %>% 
@@ -41,7 +41,7 @@ top_tag_per_year <- df %>%
 
 plot_top_tag_per_year(top_tag_per_year, top_tag_per_year$year,
                       top_tag_per_year$num_tags, top_tag_per_year$IndivTags,
-                      dataset_name)
+                      dataset_name,n)
 
 # line plot of top n tags over time
 tags_by_year <- df %>% 
@@ -54,7 +54,7 @@ top_n_tags_by_year <- tags_by_year %>%
 
 plot_top_n_tags_by_year(top_n_tags_by_year,top_n_tags_by_year$year, top_n_tags_by_year$num_tags,
                         top_n_tags_by_year$IndivTags, top_n_tags_by_year$top_n_tags_by_year,
-                        dataset_name)
+                        dataset_name,n)
   
 
 
