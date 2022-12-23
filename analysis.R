@@ -3,49 +3,63 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(ggplot2)
+library(here)
 
-raw <- read_csv("data/astronomy.csv")
-head(raw)
+source("src/utils.R")
 
-df <- raw %>% 
-  select(c(CreationDate,Score,AnswerCount,CommentCount,Tags)) %>% 
-  distinct() %>% 
-  filter(!is.na(Tags)) %>% 
-  mutate(year = substring(CreationDate,1,4)) %>% 
-  mutate(IndivTags = str_split(Tags,">")) %>% 
-  unnest(IndivTags) %>% 
-  filter(IndivTags != "") %>% 
-  mutate(IndivTags = str_replace(IndivTags,"<","")) %>% 
-  distinct()
+all_files <- list.files(path=here("data/"), pattern=".csv", all.files=TRUE,
+           full.names=FALSE)
 
-# creating analytical dataframes
+current_file <- all_files[10]
+
+dataset_name <- str_replace(current_file,".csv","")
+dataset_name <- str_replace(dataset_name,"_"," ")
+dataset_name <- paste0(str_to_title(dataset_name)," StackExchange")
+
+raw <- read_csv(here("data", current_file)) 
+
+df <- clean_df(raw)
+
+n <- 10
+
+# frequency bar chart of top N tags
+tags_by_count <- df %>% 
+  group_by(IndivTags) %>% 
+  summarize(num_tags=n()) %>% 
+  arrange(desc(num_tags)) 
+
+top_n_tags_by_count <- tags_by_count[1:n,]
+
+ggplot(top_n_tags_by_count, aes(x = reorder(IndivTags, -num_tags), y = num_tags)) + 
+  geom_col(fill = "blueviolet") + 
+  labs(title = paste0("Top ",n," Tags for ",dataset_name), x = "tag", y = "frequency") +
+  theme(axis.text.x = element_text(angle = 45,  hjust=1))
+
+# bar plot of top tag of each year
 top_tag_per_year <- df %>% 
   group_by(year,IndivTags) %>% 
   summarize(num_tags=n()) %>% 
   arrange(year,desc(num_tags)) %>% 
   slice(1)
 
+ggplot(top_tag_per_year, aes(x = year, y = num_tags, fill = IndivTags)) + 
+  geom_col() +
+  labs(title = paste0("Top Yearly Tag for ",dataset_name), x = "tag", y = "frequency",
+       fill = "Tag")
+
+# line plot of top n tags over time
 tags_by_year <- df %>% 
   group_by(year,IndivTags) %>% 
   summarize(num_tags=n()) %>% 
   arrange(year,desc(num_tags))
 
-tags_by_count <- df %>% 
-  group_by(IndivTags) %>% 
-  summarize(num_tags=n()) %>% 
-  arrange(desc(num_tags)) 
+top_n_tags_by_year <- tags_by_year %>% 
+  filter(IndivTags %in% top_n_tags_by_count$IndivTags)
 
-n <- 10
-top_n_tags_by_count <- tags_by_count[1:n,]
-
-# frequency bar chart of top N tags
-ggplot(top_n_tags_by_count, aes(x = reorder(IndivTags, -num_tags), y = num_tags)) + 
-  geom_col() + 
-  labs(title = paste0("Top ",n," Tags"), x = "tag", y = "frequency") +
-  theme(axis.text.x = element_text(angle = 45,  hjust=1))
-
-# time line chart of year vs tags
-ggplot(top_tag_per_year, aes(x = year, y = num_tags, color = IndivTags)) + 
-  geom_point()
+ggplot(top_n_tags_by_year, aes(x = year, y = num_tags, group = IndivTags, color = IndivTags)) + 
+  geom_line() +
+  labs(title = paste0("Top ",n," Tags for ",dataset_name," Over Time"), x = "tag", y = "frequency",
+       color = "Tag")
+  
 
 
