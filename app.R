@@ -24,7 +24,6 @@ ui <- fluidPage(
                   0,50,10)
     ),
     mainPanel(
-      # tableOutput("table"),
       plotOutput("Plot_top_n_tags_by_count"),
       plotOutput("Plot_top_tag_per_year"),
       plotOutput("Plot_top_n_tags_by_year")
@@ -54,17 +53,14 @@ server <- function(input, output) {
     arrange(desc(num_tags))
   })
   
-  output$table <- renderDataTable({all_files[1]})
-  
   top_n_tags_by_count <- reactive({
     tags_by_count()[1:rval_n(),]
   })
 
-  plot1 <- reactive({
+  output$Plot_top_n_tags_by_count <- renderPlot({
     plot_top_n_tags_by_count(top_n_tags_by_count(), top_n_tags_by_count()$IndivTags,
                              top_n_tags_by_count()$num_tags, dataset_name(), rval_n())
-  })
-  output$Plot_top_n_tags_by_count <- renderPlot({plot1()})
+    })
   
   # bar plot of top tag of each year
   top_tag_per_year <- reactive({
@@ -74,14 +70,12 @@ server <- function(input, output) {
       arrange(year,desc(num_tags)) %>%
       slice(1)
   })
-
-  plot2 <- reactive({
+  
+  output$Plot_top_tag_per_year <- renderPlot({
     plot_top_tag_per_year(top_tag_per_year(), top_tag_per_year()$year,
                           top_tag_per_year()$num_tags, top_tag_per_year()$IndivTags,
                           dataset_name(), rval_n())
   })
-
-  output$Plot_top_tag_per_year <- renderPlot({plot2()})
 
   # line plot of top n tags over time
   tags_by_year <- reactive({
@@ -96,12 +90,11 @@ server <- function(input, output) {
       filter(IndivTags %in% top_n_tags_by_count()$IndivTags)
   })
 
-  plot3 <- reactive({
+  output$Plot_top_n_tags_by_year <- renderPlot({
     plot_top_n_tags_by_year(top_n_tags_by_year(),top_n_tags_by_year()$year, top_n_tags_by_year()$num_tags,
                             top_n_tags_by_year()$IndivTags, top_n_tags_by_year()$IndivTags,
                             dataset_name(), rval_n())
   })
-  output$Plot_top_n_tags_by_year <- renderPlot({plot3()})
 }
 
 ################################################################################
