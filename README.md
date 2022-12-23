@@ -1,6 +1,6 @@
 # Stack-Overflow-Analysis
  
-This is a project designed to explore and visualize data from the [Stack Exchange Data Explorer](https://data.stackexchange.com/) website, in an interactive RShiny applet.
+This is a project designed to explore and visualize data from the [Stack Exchange Data Explorer](https://data.stackexchange.com/) website, in an [interactive RShiny applet](https://awesomecosmos.shinyapps.io/stack-overflow-analysis/).
 
 ## Table of Contents
   * [Motivation](#motivation)
@@ -23,7 +23,7 @@ The datasets used in this analysis were downloaded from the [Stack Exchange Data
 and downloaded as CSV files. I downloaded datasets for a few Stack Exchange network websites I visit often, such as the Astronomy, Data Science, Academia, etc. networks. Note that these are static datasets that were last downloaded on Dec 7, 2022.
 
 ## The Code
-To view and explore the datasets, I created an app in R using the Shiny framework. If you want to run this app too, follow these instructions:
+To view and explore the datasets, I created an [app](https://awesomecosmos.shinyapps.io/stack-overflow-analysis/) in R using the Shiny framework. If you want to run this app too, follow these instructions:
 
 1. Clone this repo.
 2. Have R and RStudio installed.
