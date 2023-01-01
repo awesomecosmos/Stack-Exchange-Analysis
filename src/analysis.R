@@ -47,19 +47,32 @@ CreationDate_range_df <- df %>%
 
 # questions to answer:
 # how many total questions were answered in the time range Time1 - Time2?
+# what percentage of these questions were marked as closed?
 tmp <- CreationDate_range_df %>% 
   select(CreationDate,ClosedDate,Body) %>% 
-  distinct()
-
-n_total_questions <- length(unique(tmp$Body))
-
-# what percentage of these questions were marked as closed?
-tmp <- tmp %>% 
-  filter(!is.na(ClosedDate)) %>% 
-  mutate(n_closed_questions = n()) %>% 
+  distinct() %>% 
+  group_by(CreationDate) %>% 
+  mutate(
+    n_questions_per_day = n(),
+    question_closed_or_not = case_when(
+      !is.na(ClosedDate) ~ 1,
+      TRUE ~ 0
+    )) %>% 
+  select(CreationDate,n_questions_per_day,question_closed_or_not) %>% 
+  distinct() %>% 
+  group_by(CreationDate) %>% 
   slice(1)
 
-percent_closed <- (tmp$n_closed_questions / n_total_questions) * 100
+n_total_questions <- sum(tmp$n_questions_per_day)
+n_closed_questions <- sum(tmp$question_closed_or_not)
+percent_closed <- round((n_closed_questions / n_total_questions) * 100, 2)
+
+plot <- ggplot(tmp, aes(x = CreationDate, y = n_questions_per_day)) + 
+  geom_line() +
+  labs(title = paste0("Number of Questions Asked on ",dataset_name," Between ",creation_date_start," - ", creation_date_end), 
+       x = "date", y = "number of questions",
+       subtitle = paste0(n_closed_questions," / ",n_total_questions," questions closed (",percent_closed,"%)"))
+print(plot)
 
 # what is the average duration between CreationDate and [LastEditDate | LastActivityDate | ClosedDate]?
 #as.numeric(difftime(creation_date_end,creation_date_start, units = "days"))
@@ -103,25 +116,35 @@ tmp <- CreationDate_range_df %>%
   select(-Score) %>% distinct()
   
 # how does score compare to ViewCount, CommentCount and FavoriteCount?
-# how many distinct users (OwnerId) have asked questions for a certain tag?
-# rank users (OwnerId) based on score, ViewCount, CommentCount and FavoriteCount
+tmp <- CreationDate_range_df %>% 
+  select(CreationDate,Score,ViewCount,CommentCount,IndivTags) %>% 
+  distinct() %>% 
+  group_by(CreationDate,IndivTags) %>% 
+  mutate(
+    ratio_ViewCount = round(Score / ViewCount, 3),
+    ratio_CommentCount = case_when(
+      CommentCount == 0 ~ 0,
+      TRUE ~ round(Score / CommentCount, 3)
+    )
+  )
 
+# how many distinct users (OwnerUserId) have asked questions for a certain tag?
+# rank users (OwnerUserId) based on score, ViewCount, CommentCount and FavoriteCount
+chosen_tag <- "observational-astronomy"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+tmp <- CreationDate_range_df %>% 
+  select(CreationDate,OwnerUserId,Score,ViewCount,CommentCount,IndivTags) %>% 
+  distinct() %>% 
+  filter(IndivTags == chosen_tag) %>% 
+  group_by(OwnerUserId) %>% 
+  mutate(
+    n_questions = n(),
+    total_score = sum(Score),
+    total_views = sum(ViewCount),
+    total_comments = sum(CommentCount)
+  ) %>% 
+  select(OwnerUserId,n_questions,total_score,total_views,total_comments) %>% 
+  distinct()
 
 
 
