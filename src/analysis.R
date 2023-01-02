@@ -76,34 +76,42 @@ print(plot)
 
 # what is the average duration between CreationDate and [LastEditDate | LastActivityDate | ClosedDate]?
 #as.numeric(difftime(creation_date_end,creation_date_start, units = "days"))
+
+dataset_date <- "2022-12-07" # this is the date the dataset was downloaded
+
 tmp <- CreationDate_range_df %>% 
   select(CreationDate,ClosedDate,LastEditDate,LastActivityDate,ClosedDate) %>% 
   distinct() %>% 
   mutate(
-    diff_LastEditDate = as.numeric(difftime(LastEditDate, CreationDate, units = "days")),
-    diff_LastActivityDate = as.numeric(difftime(LastActivityDate, CreationDate, units = "days")),
-    diff_ClosedDate = as.numeric(difftime(ClosedDate, CreationDate, units = "days"))
+    diff_LastEditDate = case_when(
+      !is.na(LastEditDate) ~ as.numeric(difftime(LastEditDate, CreationDate, units = "days")),
+      is.na(LastEditDate) ~ as.numeric(difftime(dataset_date, CreationDate, units = "days"))
+    ),
+    diff_LastActivityDate = case_when(
+      !is.na(LastActivityDate) ~ as.numeric(difftime(LastActivityDate, CreationDate, units = "days")),
+      is.na(LastActivityDate) ~ as.numeric(difftime(dataset_date, CreationDate, units = "days"))
+    ),
+    diff_ClosedDate = case_when(
+      !is.na(ClosedDate) ~ as.numeric(difftime(ClosedDate, CreationDate, units = "days")),
+      is.na(ClosedDate) ~ as.numeric(difftime(dataset_date, CreationDate, units = "days"))
+    )) %>% 
+  group_by(CreationDate) %>% 
+  mutate(
+    avg_diff_LastEditDate = mean(diff_LastEditDate),
+    avg_diff_LastActivityDate = mean(diff_LastActivityDate),
+    avg_diff_ClosedDate = mean(diff_ClosedDate)
   ) %>% 
-  select(diff_LastEditDate,diff_LastActivityDate,diff_ClosedDate) %>% 
+  select(CreationDate,avg_diff_LastEditDate,avg_diff_LastActivityDate,avg_diff_ClosedDate) %>% 
   distinct()
 
-avg_diff_LastEditDate <- tmp %>% 
-  filter(!is.na(diff_LastEditDate)) %>% 
-  select(diff_LastEditDate) %>% 
-  summarise(mean(diff_LastEditDate))
-avg_diff_LastEditDate <- avg_diff_LastEditDate[[1]]
 
-avg_diff_LastActivityDate <- tmp %>% 
-  filter(!is.na(diff_LastActivityDate)) %>% 
-  select(diff_LastActivityDate) %>% 
-  summarise(mean(diff_LastActivityDate))
-avg_diff_LastActivityDate <- avg_diff_LastActivityDate[[1]]
-
-avg_diff_ClosedDate <- tmp %>% 
-  filter(!is.na(diff_ClosedDate)) %>% 
-  select(diff_ClosedDate) %>% 
-  summarise(mean(diff_ClosedDate))
-avg_diff_ClosedDate <- avg_diff_ClosedDate[[1]]
+plot <- ggplot(tmp, aes(x = CreationDate)) + 
+  geom_line(aes(y = avg_diff_LastEditDate), color="red") +
+  geom_line(aes(y = avg_diff_LastActivityDate), color="green") +
+  geom_line(aes(y = avg_diff_ClosedDate), color="blue") + 
+  labs(title = paste0("Average Difference Between Creation Date and other dates on ",dataset_name," Between ",creation_date_start," - ", creation_date_end),
+       x = "date", y = "average number of days")
+print(plot)
 
 # what is the average score of questions for a chosen tag?
 # what is the average score of questions in a time range?
@@ -111,9 +119,22 @@ tmp <- CreationDate_range_df %>%
   select(IndivTags,Score) %>% 
   distinct() %>% 
   group_by(IndivTags) %>% 
-  mutate(TotalScore = sum(Score)) %>% 
-  mutate(AvgScore = mean(Score)) %>% 
-  select(-Score) %>% distinct()
+  mutate(
+    TotalScore = sum(Score),
+    AvgScore = mean(Score)
+    ) %>% 
+  ungroup() %>% 
+  select(-Score) %>% distinct() %>% 
+  arrange(desc(TotalScore)) 
+
+tmp <- tmp[1:n,]
+
+plot <- ggplot(tmp, aes(x = IndivTags)) + 
+  geom_line(aes(y = AvgScore, group = 1), color="red") +
+  geom_line(aes(y = TotalScore, group = 1), color="green") +
+  labs(title = paste0("Total Score and Average Score for Questions by Tags on ",dataset_name," Between ",creation_date_start," - ", creation_date_end),
+       x = "date", y = "average number of days")
+print(plot)
   
 # how does score compare to ViewCount, CommentCount and FavoriteCount?
 tmp <- CreationDate_range_df %>% 
@@ -126,7 +147,32 @@ tmp <- CreationDate_range_df %>%
       CommentCount == 0 ~ 0,
       TRUE ~ round(Score / CommentCount, 3)
     )
-  )
+  ) %>% 
+  ungroup()
+
+tmp1 <- tmp %>% 
+  select(CreationDate,ratio_ViewCount,ratio_CommentCount) %>% 
+  distinct()
+
+plot <- ggplot(tmp1, aes(x = CreationDate)) + 
+  geom_line(aes(y = ratio_ViewCount, group = 1), color="red") +
+  geom_line(aes(y = ratio_CommentCount, group = 1), color="green") +
+  labs(title = paste0("Total Score and Average Score for Questions by Tags on ",dataset_name," Between ",creation_date_start," - ", creation_date_end),
+       x = "date", y = "average number of days")
+print(plot)
+
+tmp2 <- tmp %>% 
+  select(IndivTags,ratio_ViewCount,ratio_CommentCount) %>% 
+  distinct()
+
+tmp2 <- tmp2[1:n,]
+
+plot <- ggplot(tmp2, aes(x = IndivTags)) + 
+  geom_line(aes(y = ratio_ViewCount, group = 1), color="red") +
+  geom_point(aes(y = ratio_CommentCount, group = 1), color="green") +
+  labs(title = paste0("Tags vs Ratio of Score to ViewCount and CommentCount for ",dataset_name," Between ",creation_date_start," - ", creation_date_end),
+       x = "tag", y = "ratio")
+print(plot)
 
 # how many distinct users (OwnerUserId) have asked questions for a certain tag?
 # rank users (OwnerUserId) based on score, ViewCount, CommentCount and FavoriteCount
@@ -138,15 +184,25 @@ tmp <- CreationDate_range_df %>%
   filter(IndivTags == chosen_tag) %>% 
   group_by(OwnerUserId) %>% 
   mutate(
+    OwnerUserId = toString(OwnerUserId),
     n_questions = n(),
     total_score = sum(Score),
     total_views = sum(ViewCount),
     total_comments = sum(CommentCount)
   ) %>% 
-  select(OwnerUserId,n_questions,total_score,total_views,total_comments) %>% 
+  ungroup() %>% 
+  select(OwnerUserId,n_questions,total_score,total_comments) %>% 
   distinct()
 
+tmp3 <- pivot_longer(tmp, cols=c('n_questions', 'total_score', 'total_comments'), 
+             names_to='variable', 
+             values_to="value")[16:28,]
 
+ggplot(tmp3, aes(x=OwnerUserId, y=value, fill=variable)) +
+  geom_bar(stat='identity', position='dodge') +
+  # facet_wrap(~ variable)
+  labs(title = paste0("Tags vs Ratio of Score to ViewCount and CommentCount for ",dataset_name," Between ",creation_date_start," - ", creation_date_end),
+       x = "OwnerUserId", y = "number")
 
 # # frequency bar chart of top N tags
 # tags_by_count <- df %>% 
