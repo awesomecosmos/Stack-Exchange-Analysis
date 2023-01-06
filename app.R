@@ -38,29 +38,35 @@ server <- function(input, output) {
   rval_n <- reactive({input$n})
   
   index <- reactive({match(rval_dataset(),all_dataset_names)})
-
-  current_file <- reactive({all_files[index()]})
+  
+  current_file <- reactive({
+    #all_files[index()]
+    str_replace(all_files[index()],".csv",".rds")
+    })
   dataset_name <- reactive({all_dataset_names[index()]})
-
-  raw <- reactive({read_csv(here("data", current_file()))})
-  df <- reactive({clean_df(raw())})
-
+  
+  df <- reactive({
+    #read_csv(here("data", current_file()))
+    readRDS(paste0("data/rds/",current_file()))
+    })
+  # df <- reactive({clean_df(raw())})
+  
   # frequency bar chart of top N tags
   tags_by_count <- reactive({
-  df() %>%
-    group_by(IndivTags) %>%
-    summarize(num_tags=n()) %>%
-    arrange(desc(num_tags))
+    df() %>%
+      group_by(IndivTags) %>%
+      summarize(num_tags=n()) %>%
+      arrange(desc(num_tags))
   })
   
   top_n_tags_by_count <- reactive({
     tags_by_count()[1:rval_n(),]
   })
-
+  
   output$Plot_top_n_tags_by_count <- renderPlot({
     plot_top_n_tags_by_count(top_n_tags_by_count(), top_n_tags_by_count()$IndivTags,
                              top_n_tags_by_count()$num_tags, dataset_name(), rval_n())
-    })
+  })
   
   # bar plot of top tag of each year
   top_tag_per_year <- reactive({
@@ -76,7 +82,7 @@ server <- function(input, output) {
                           top_tag_per_year()$num_tags, top_tag_per_year()$IndivTags,
                           dataset_name(), rval_n())
   })
-
+  
   # line plot of top n tags over time
   tags_by_year <- reactive({
     df() %>%
@@ -84,12 +90,12 @@ server <- function(input, output) {
       summarize(num_tags=n()) %>%
       arrange(year,desc(num_tags))
   })
-
+  
   top_n_tags_by_year <- reactive({
     tags_by_year() %>%
       filter(IndivTags %in% top_n_tags_by_count()$IndivTags)
   })
-
+  
   output$Plot_top_n_tags_by_year <- renderPlot({
     plot_top_n_tags_by_year(top_n_tags_by_year(),top_n_tags_by_year()$year, top_n_tags_by_year()$num_tags,
                             top_n_tags_by_year()$IndivTags, top_n_tags_by_year()$IndivTags,

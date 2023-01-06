@@ -18,16 +18,25 @@ dataset_reader <- function(path){
 
 # function to clean raw dataframe
 clean_df <- function(raw_df){
-  df <- raw_df %>% 
-    select(c(CreationDate,Score,AnswerCount,CommentCount,Tags)) %>% 
+  df <- raw %>% 
+    select(CreationDate,LastEditDate,LastActivityDate,ClosedDate,
+           OwnerUserId,Body,Score,ViewCount,CommentCount,FavoriteCount,
+           AnswerCount,CommentCount,Tags) %>%
     distinct() %>% 
+    mutate(
+      CreationDate = as.Date(as.POSIXct(CreationDate)),
+      LastEditDate = as.Date(as.POSIXct(LastEditDate)),
+      LastActivityDate = as.Date(as.POSIXct(LastActivityDate)),
+      ClosedDate = as.Date(as.POSIXct(ClosedDate)),
+      year = substring(CreationDate,1,4)
+    ) %>% 
     filter(!is.na(Tags)) %>% 
-    mutate(year = substring(CreationDate,1,4)) %>% 
     mutate(IndivTags = str_split(Tags,">")) %>% 
     unnest(IndivTags) %>% 
     filter(IndivTags != "") %>% 
     mutate(IndivTags = str_replace(IndivTags,"<","")) %>% 
     distinct()
+  
   return(df)
 }
 

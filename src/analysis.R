@@ -19,28 +19,12 @@ dataset_name <- all_dataset_names[index]
 
 raw <- read_csv(here("data", current_file)) 
 
-# df <- clean_df(raw)
-df <- raw %>% 
-  select(c(CreationDate,LastEditDate,LastActivityDate,ClosedDate,
-           OwnerUserId,Body,Score,ViewCount,CommentCount,FavoriteCount,
-           AnswerCount,CommentCount,Tags)) %>%
-  distinct() %>% 
-  mutate(
-    CreationDate = as.Date(as.POSIXct(CreationDate)),
-    LastEditDate = as.Date(as.POSIXct(LastEditDate)),
-    LastActivityDate = as.Date(as.POSIXct(LastActivityDate)),
-    ClosedDate = as.Date(as.POSIXct(ClosedDate))
-  ) %>% 
-  filter(!is.na(Tags)) %>% 
-  mutate(year = substring(CreationDate,1,4)) %>% 
-  mutate(IndivTags = str_split(Tags,">")) %>% 
-  unnest(IndivTags) %>% 
-  filter(IndivTags != "") %>% 
-  mutate(IndivTags = str_replace(IndivTags,"<","")) %>% 
-  distinct()
+df <- clean_df(raw)
 
 creation_date_start <- "2021-01-01"
 creation_date_end <- "2021-07-31"
+dataset_date <- "2022-12-07" # this is the date the dataset was downloaded
+chosen_tag <- "observational-astronomy"
 
 CreationDate_range_df <- df %>% 
   filter(CreationDate >= creation_date_start & CreationDate <= creation_date_end)
@@ -77,7 +61,7 @@ print(plot)
 # what is the average duration between CreationDate and [LastEditDate | LastActivityDate | ClosedDate]?
 #as.numeric(difftime(creation_date_end,creation_date_start, units = "days"))
 
-dataset_date <- "2022-12-07" # this is the date the dataset was downloaded
+
 
 tmp <- CreationDate_range_df %>% 
   select(CreationDate,ClosedDate,LastEditDate,LastActivityDate,ClosedDate) %>% 
@@ -176,7 +160,7 @@ print(plot)
 
 # how many distinct users (OwnerUserId) have asked questions for a certain tag?
 # rank users (OwnerUserId) based on score, ViewCount, CommentCount and FavoriteCount
-chosen_tag <- "observational-astronomy"
+
 
 tmp <- CreationDate_range_df %>% 
   select(CreationDate,OwnerUserId,Score,ViewCount,CommentCount,IndivTags) %>% 
