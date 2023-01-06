@@ -11,6 +11,7 @@ source("src/utils.R")
 files_and_names <- dataset_reader(path = here("data/"))
 all_files <- files_and_names[[1]]
 all_dataset_names <- files_and_names[[2]]
+dataset_date <- "2022-12-07" # this is the date the dataset was downloaded
 
 ################################################################################
 # UI
@@ -21,11 +22,14 @@ ui <- fluidPage(
       selectInput("dataset","Select a StackExchange dataset:",
                   all_dataset_names, all_dataset_names[2]),
       sliderInput("n","Select number of data points to display:",
-                  0,50,10)
+                  0,50,10),
+      dateRangeInput("dates", "Enter date range of StackExchange posts:",
+                     start = "2021-01-01", end = dataset_date,
+                     max = dataset_date, format = "yyyy-mm-dd")
     ),
     mainPanel(
-      plotOutput("Plot_top_n_tags_by_count"),
       plotOutput("Plot_top_tag_per_year"),
+      plotOutput("Plot_top_n_tags_by_count"),
       plotOutput("Plot_top_n_tags_by_year")
     )
   )
@@ -36,20 +40,32 @@ ui <- fluidPage(
 server <- function(input, output) {
   rval_dataset <- reactive({input$dataset})
   rval_n <- reactive({input$n})
+  rval_creation_date_start <- reactive({input$dates[[1]]})
+  rval_creation_date_end <- reactive({input$dates[[2]]})
   
   index <- reactive({match(rval_dataset(),all_dataset_names)})
-  
-  current_file <- reactive({
-    #all_files[index()]
-    str_replace(all_files[index()],".csv",".rds")
-    })
+  current_file <- reactive({str_replace(all_files[index()],".csv",".rds")})
   dataset_name <- reactive({all_dataset_names[index()]})
   
   df <- reactive({
-    #read_csv(here("data", current_file()))
-    readRDS(paste0("data/rds/",current_file()))
+    readRDS(paste0("data/rds/",current_file())) %>% 
+      filter(CreationDate >= rval_creation_date_start() & CreationDate <= rval_creation_date_end())
     })
-  # df <- reactive({clean_df(raw())})
+  
+  # bar plot of top tag of each year
+  top_tag_per_year <- reactive({
+    df() %>%
+      group_by(year,IndivTags) %>%
+      summarize(num_tags=n()) %>%
+      arrange(year,desc(num_tags)) %>%
+      slice(1)
+  })
+  
+  output$Plot_top_tag_per_year <- renderPlot({
+    plot_top_tag_per_year(top_tag_per_year(), top_tag_per_year()$year,
+                          top_tag_per_year()$num_tags, top_tag_per_year()$IndivTags,
+                          dataset_name(), rval_n())
+  })
   
   # frequency bar chart of top N tags
   tags_by_count <- reactive({
@@ -66,21 +82,6 @@ server <- function(input, output) {
   output$Plot_top_n_tags_by_count <- renderPlot({
     plot_top_n_tags_by_count(top_n_tags_by_count(), top_n_tags_by_count()$IndivTags,
                              top_n_tags_by_count()$num_tags, dataset_name(), rval_n())
-  })
-  
-  # bar plot of top tag of each year
-  top_tag_per_year <- reactive({
-    df() %>%
-      group_by(year,IndivTags) %>%
-      summarize(num_tags=n()) %>%
-      arrange(year,desc(num_tags)) %>%
-      slice(1)
-  })
-  
-  output$Plot_top_tag_per_year <- renderPlot({
-    plot_top_tag_per_year(top_tag_per_year(), top_tag_per_year()$year,
-                          top_tag_per_year()$num_tags, top_tag_per_year()$IndivTags,
-                          dataset_name(), rval_n())
   })
   
   # line plot of top n tags over time
