@@ -19,13 +19,24 @@ ui <- fluidPage(
   titlePanel("StackExchange Explorer"),
   sidebarLayout(
     sidebarPanel(
+      h4("Welcome to the StackExchange Dataset Explorer!"),
+      p("You can select a StackExchange network and explore data related to 
+        questions and answers on the site, their associated tags, and more!
+        You can also filter the data according to a time range, and also download
+        these plots for your own analysis!"),
       selectInput("dataset","Select a StackExchange dataset:",
                   all_dataset_names, all_dataset_names[2]),
       sliderInput("n","Select number of data points to display:",
                   0,50,10),
       dateRangeInput("dates", "Enter date range of StackExchange posts (for 'Time Series Analysis' tab):",
                      start = "2021-01-01", end = dataset_date,
-                     max = dataset_date, format = "yyyy-mm-dd")
+                     max = dataset_date, format = "yyyy-mm-dd"),
+      # p("You can find the source code for this app here:"),
+      # a("https://github.com/awesomecosmos/Stack-Exchange-Analysis")
+      
+      p("You can find the source code for this app here:",
+        a("Github", 
+          href = "https://github.com/awesomecosmos/Stack-Exchange-Analysis"))
     ),
     mainPanel(
       tabsetPanel(
