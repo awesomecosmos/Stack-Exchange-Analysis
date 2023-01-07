@@ -53,16 +53,13 @@ percent_closed <- round((n_closed_questions / n_total_questions) * 100, 2)
 
 plot <- ggplot(tmp, aes(x = CreationDate, y = n_questions_per_day)) + 
   geom_line() +
+  geom_smooth(method="lm", se=FALSE) +
   labs(title = paste0("Number of Questions Asked on ",dataset_name," Between ",creation_date_start," - ", creation_date_end), 
        x = "date", y = "number of questions",
        subtitle = paste0(n_closed_questions," / ",n_total_questions," questions closed (",percent_closed,"%)"))
 print(plot)
 
 # what is the average duration between CreationDate and [LastEditDate | LastActivityDate | ClosedDate]?
-#as.numeric(difftime(creation_date_end,creation_date_start, units = "days"))
-
-
-
 tmp <- CreationDate_range_df %>% 
   select(CreationDate,ClosedDate,LastEditDate,LastActivityDate,ClosedDate) %>% 
   distinct() %>% 
@@ -89,11 +86,18 @@ tmp <- CreationDate_range_df %>%
   distinct()
 
 
+
+
 plot <- ggplot(tmp, aes(x = CreationDate)) + 
-  geom_line(aes(y = avg_diff_LastEditDate), color="red") +
-  geom_line(aes(y = avg_diff_LastActivityDate), color="green") +
-  geom_line(aes(y = avg_diff_ClosedDate), color="blue") + 
-  labs(title = paste0("Average Difference Between Creation Date and other dates on ",dataset_name," Between ",creation_date_start," - ", creation_date_end),
+  geom_line(aes(y = avg_diff_LastEditDate, colour="CreationDate - LastEditDate")) +
+  geom_line(aes(y = avg_diff_LastActivityDate, colour="CreationDate - LastActivityDate")) +
+  geom_line(aes(y = avg_diff_ClosedDate, colour="CreationDate - ClosedDate")) +
+  scale_color_manual(name = "Avg. Difference Between:",
+                     values = c("CreationDate - LastEditDate" = "dodgerblue2",
+                                "CreationDate - LastActivityDate" = "seagreen3",
+                                "CreationDate - ClosedDate" = "indianred2")) +
+  labs(title = paste0("Average Difference Between Creation Date and other dates on ",
+                      dataset_name," Between ",creation_date_start," - ", creation_date_end),
        x = "date", y = "average number of days")
 print(plot)
 
@@ -139,7 +143,7 @@ tmp1 <- tmp %>%
   distinct()
 
 plot <- ggplot(tmp1, aes(x = CreationDate)) + 
-  geom_line(aes(y = ratio_ViewCount, group = 1), color="red") +
+  # geom_line(aes(y = ratio_ViewCount, group = 1), color="red") +
   geom_line(aes(y = ratio_CommentCount, group = 1), color="green") +
   labs(title = paste0("Total Score and Average Score for Questions by Tags on ",dataset_name," Between ",creation_date_start," - ", creation_date_end),
        x = "date", y = "average number of days")
@@ -160,8 +164,6 @@ print(plot)
 
 # how many distinct users (OwnerUserId) have asked questions for a certain tag?
 # rank users (OwnerUserId) based on score, ViewCount, CommentCount and FavoriteCount
-
-
 tmp <- CreationDate_range_df %>% 
   select(CreationDate,OwnerUserId,Score,ViewCount,CommentCount,IndivTags) %>% 
   distinct() %>% 
