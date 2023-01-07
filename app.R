@@ -25,19 +25,23 @@ ui <- fluidPage(
                   0,50,10),
       dateRangeInput("dates", "Enter date range of StackExchange posts (for 'Time Series Analysis' tab):",
                      start = "2021-01-01", end = dataset_date,
-                     max = dataset_date, format = "yyyy-mm-dd"),
-      downloadButton("download_plot_questions_timeseries","download me!")
+                     max = dataset_date, format = "yyyy-mm-dd")
     ),
     mainPanel(
       tabsetPanel(
         tabPanel("Overall Analysis",
           plotOutput("Plot_top_tag_per_year"),
+          downloadButton("download_Plot_top_tag_per_year","Download this plot"),
           plotOutput("Plot_top_n_tags_by_year"),
-          plotOutput("Plot_top_n_tags_by_count")
+          downloadButton("download_plot_top_n_tags_by_year","Download this plot"),
+          plotOutput("Plot_top_n_tags_by_count"),
+          downloadButton("download_plot_top_n_tags_by_count","Download this plot")
         ),
         tabPanel("Time Series Analysis",
           plotOutput("plot_questions_timeseries"),
-          plotOutput("plot_avg_duration_between_dates")
+          downloadButton("download_plot_questions_timeseries","Download this plot"),
+          plotOutput("plot_avg_duration_between_dates"),
+          downloadButton("download_plot_avg_duration_between_dates","Download this plot")
         )
       )
     )
@@ -80,35 +84,24 @@ server <- function(input, output) {
       slice(1)
   })
   
-  plot1 <- reactive({
-    plot_top_tag_per_year(top_tag_per_year(), top_tag_per_year()$year,
-                          top_tag_per_year()$num_tags, top_tag_per_year()$IndivTags,
-                          dataset_name(), rval_n())
+  ggplot_top_tag_per_year <- reactive({
+    ggplot(top_tag_per_year(), aes(x = year, y = num_tags, fill = IndivTags)) + 
+      geom_col() +
+      labs(title = paste0("Top Yearly Tag on ",dataset_name()), 
+           x = "year", y = "frequency", fill = "Tag")
   })
   output$Plot_top_tag_per_year <- renderPlot({
-    plot1()
+    ggplot_top_tag_per_year()
   })
+  output$download_Plot_top_tag_per_year <- downloadHandler(
+    filename = function() {paste0(dataset_name(),'-top_tag_per_year.png')},
+    content = function(file) {
+      ggsave(file, plot = ggplot_top_tag_per_year(), 
+             width = 700, height = 300, units = "mm",
+             device = "png")
+    }
+  )
   
-  # output$download_Plot_top_tag_per_year <- downloadHandler(
-  #   filename = function() {'top_tag_per_yr.png'},
-  #   content = function(file) {
-  #     ggsave(file, plot = plot1(), device = "png")
-  #   }
-  # )
-  # output$download_Plot_top_tag_per_year <- downloadHandler(
-  #   filename = "top_tag_per_yr.png" ,
-  #   content = function(file) {
-  #     ggsave(plot1(), filename = file)
-  #   })
-  # output$download_Plot_top_tag_per_year <- downloadHandler(
-  #   filename = function(file) {
-  #     "top_tag_per_yr.png"
-  #     #ifelse(is.null(input$DataFile), return(), str_c(input$Title, ".png"))
-  #   },
-  #   content = function(file) {
-  #     ggsave(file, plot = plot1(), device = "png")#, width = 290, height = 265, units = "mm", device = "png")
-  #   }
-  # )
   
   # frequency bar chart of top N tags
   tags_by_count <- reactive({
@@ -122,10 +115,24 @@ server <- function(input, output) {
     tags_by_count()[1:rval_n(),]
   })
   
-  output$Plot_top_n_tags_by_count <- renderPlot({
-    plot_top_n_tags_by_count(top_n_tags_by_count(), top_n_tags_by_count()$IndivTags,
-                             top_n_tags_by_count()$num_tags, dataset_name(), rval_n())
+  ggplot_top_n_tags_by_count <- reactive({
+    ggplot(top_n_tags_by_count(), aes(x = reorder(IndivTags, -num_tags), y = num_tags)) + 
+      geom_col(fill = "blueviolet") + 
+      labs(title = paste0("Top ",rval_n()," Tags on ",dataset_name()), 
+           x = "tag", y = "frequency") +
+      theme(axis.text.x = element_text(angle = 45,  hjust=1))
   })
+  output$Plot_top_n_tags_by_count <- renderPlot({
+    ggplot_top_n_tags_by_count()
+  })
+  output$download_plot_top_n_tags_by_count <- downloadHandler(
+    filename = function() {paste0(dataset_name(),'-top_n_tags_by_count.png')},
+    content = function(file) {
+      ggsave(file, plot = ggplot_top_n_tags_by_count(), 
+             width = 700, height = 300, units = "mm",
+             device = "png")
+    }
+  )
   
   # line plot of top n tags over time
   tags_by_year <- reactive({
@@ -140,11 +147,25 @@ server <- function(input, output) {
       filter(IndivTags %in% top_n_tags_by_count()$IndivTags)
   })
   
-  output$Plot_top_n_tags_by_year <- renderPlot({
-    plot_top_n_tags_by_year(top_n_tags_by_year(),top_n_tags_by_year()$year, top_n_tags_by_year()$num_tags,
-                            top_n_tags_by_year()$IndivTags, top_n_tags_by_year()$IndivTags,
-                            dataset_name(), rval_n())
+  ggplot_top_n_tags_by_year <- reactive({
+    ggplot(top_n_tags_by_year(), aes(x = year, y = num_tags, 
+                                     group = IndivTags, color = IndivTags)) + 
+      geom_line() +
+      labs(title = paste0("Top ",rval_n()," Tags on ",dataset_name()," Over Time"), 
+           x = "year", y = "frequency",
+           color = "Tag")
   })
+  output$Plot_top_n_tags_by_year <- renderPlot({
+    ggplot_top_n_tags_by_year()
+  })
+  output$download_plot_top_n_tags_by_year <- downloadHandler(
+    filename = function() {paste0(dataset_name(),'-top_n_tags_by_year.png')},
+    content = function(file) {
+      ggsave(file, plot = ggplot_top_n_tags_by_year(), 
+             width = 700, height = 300, units = "mm",
+             device = "png")
+    }
+  )
   
   # how many total questions were answered in the time range Time1 - Time2?
   # what percentage of these questions were marked as closed?
@@ -176,23 +197,20 @@ server <- function(input, output) {
       labs(title = paste0("Number of Questions Asked on ",dataset_name(),
                           date_diff_for_display()), 
            x = "date", y = "number of questions",
-           subtitle = paste0(n_closed_questions()," / ",n_total_questions()," questions closed (",percent_closed(),"%)"))
+           subtitle = paste0(n_closed_questions()," / ",n_total_questions(),
+                             " questions closed (",percent_closed(),"%)"))
   })
   output$plot_questions_timeseries <- renderPlot({
     ggplot_questions_timeseries()
   })
   output$download_plot_questions_timeseries <- downloadHandler(
-    filename = function() {'top_tag_per_yr.png'},
+    filename = function() {paste0(dataset_name(),'-questions_timeseries.png')},
     content = function(file) {
       ggsave(file, plot = ggplot_questions_timeseries(), 
-             width = 700, height = 300, units = "mm", device = "png")
+             width = 700, height = 300, units = "mm",
+             device = "png")
     }
   )
-  # output$download_Plot_top_tag_per_year <- downloadHandler(
-  #   filename = "top_tag_per_yr.png" ,
-  #   content = function(file) {
-  #     ggsave(plot1(), filename = file)
-  #   })
   
   # what is the average duration between CreationDate and [LastEditDate | LastActivityDate | ClosedDate]?
   avg_duration_between_dates <- reactive({
@@ -226,8 +244,8 @@ server <- function(input, output) {
   mean_avg_diff_LastActivityDate <- reactive({round(mean(avg_duration_between_dates()$avg_diff_LastActivityDate),0)})
   mean_avg_diff_ClosedDate <- reactive({round(mean(avg_duration_between_dates()$avg_diff_ClosedDate),0)})
   
-  output$plot_avg_duration_between_dates <- renderPlot({
-    plot <- ggplot(avg_duration_between_dates(), aes(x = CreationDate)) + 
+  ggplot_avg_duration_between_dates <- reactive({
+    ggplot(avg_duration_between_dates(), aes(x = CreationDate)) + 
       geom_line(aes(y = avg_diff_LastEditDate, colour="CreationDate - LastEditDate")) +
       geom_line(aes(y = avg_diff_LastActivityDate, colour="CreationDate - LastActivityDate")) +
       geom_line(aes(y = avg_diff_ClosedDate, colour="CreationDate - ClosedDate")) +
@@ -246,10 +264,21 @@ server <- function(input, output) {
              mean_avg_diff_LastEditDate(), " days, ",
              "Avg. difference in days between a question's creation and close: ",
              mean_avg_diff_ClosedDate(), "days."
-             )
+           )
       )
-    print(plot)
   })
+  
+  output$plot_avg_duration_between_dates <- renderPlot({
+    ggplot_avg_duration_between_dates()
+  })
+  output$download_plot_avg_duration_between_dates <- downloadHandler(
+    filename = function() {paste0(dataset_name(),'-avg_duration_between_dates.png')},
+    content = function(file) {
+      ggsave(file, plot = ggplot_avg_duration_between_dates(), 
+             width = 700, height = 300, units = "mm",
+             device = "png")
+    }
+  )
   
 }
 
