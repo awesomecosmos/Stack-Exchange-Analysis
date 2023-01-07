@@ -25,7 +25,8 @@ ui <- fluidPage(
                   0,50,10),
       dateRangeInput("dates", "Enter date range of StackExchange posts (for 'Time Series Analysis' tab):",
                      start = "2021-01-01", end = dataset_date,
-                     max = dataset_date, format = "yyyy-mm-dd")
+                     max = dataset_date, format = "yyyy-mm-dd"),
+      downloadButton("download_Plot_top_tag_per_year","download me!")
     ),
     mainPanel(
       tabsetPanel(
@@ -38,9 +39,6 @@ ui <- fluidPage(
           plotOutput("plot_questions_timeseries"),
           plotOutput("plot_avg_duration_between_dates")
         )
-        # tabPanel("tab3",
-        #   plotOutput("plot_score_vs_comments")
-        # )
       )
     )
   )
@@ -82,11 +80,35 @@ server <- function(input, output) {
       slice(1)
   })
   
-  output$Plot_top_tag_per_year <- renderPlot({
+  plot1 <- reactive({
     plot_top_tag_per_year(top_tag_per_year(), top_tag_per_year()$year,
                           top_tag_per_year()$num_tags, top_tag_per_year()$IndivTags,
                           dataset_name(), rval_n())
   })
+  output$Plot_top_tag_per_year <- renderPlot({
+    plot1()
+  })
+  
+  output$download_Plot_top_tag_per_year <- downloadHandler(
+    filename = function() {'top_tag_per_yr.png'},
+    content = function(file) {
+      ggsave(file, plot = plot1(), device = "png")
+    }
+  )
+  # output$download_Plot_top_tag_per_year <- downloadHandler(
+  #   filename = "top_tag_per_yr.png" ,
+  #   content = function(file) {
+  #     ggsave(plot1(), filename = file)
+  #   })
+  # output$download_Plot_top_tag_per_year <- downloadHandler(
+  #   filename = function(file) {
+  #     "top_tag_per_yr.png"
+  #     #ifelse(is.null(input$DataFile), return(), str_c(input$Title, ".png"))
+  #   },
+  #   content = function(file) {
+  #     ggsave(file, plot = plot1(), device = "png")#, width = 290, height = 265, units = "mm", device = "png")
+  #   }
+  # )
   
   # frequency bar chart of top N tags
   tags_by_count <- reactive({
@@ -206,7 +228,7 @@ server <- function(input, output) {
            caption = paste0(
              "Avg. difference in days between a question's creation and last activity: ",
              mean_avg_diff_LastActivityDate(), " days, ",
-             "Avg. difference in days between a question's creation and last edit: ",
+             "Avg. difference in days between a question's creatison and last edit: ",
              mean_avg_diff_LastEditDate(), " days, ",
              "Avg. difference in days between a question's creation and close: ",
              mean_avg_diff_ClosedDate(), "days."
@@ -214,64 +236,6 @@ server <- function(input, output) {
       )
     print(plot)
   })
-  
-  # # what is the average score of questions for a chosen tag?
-  # # what is the average score of questions in a time range?
-  # questions_score <- reactive({
-  #   tmp <- df_date_filtered() %>% 
-  #     select(IndivTags,Score) %>% 
-  #     distinct() %>% 
-  #     group_by(IndivTags) %>% 
-  #     mutate(
-  #       TotalScore = sum(Score),
-  #       AvgScore = mean(Score)
-  #     ) %>% 
-  #     ungroup() %>% 
-  #     select(-Score) %>% distinct() %>% 
-  #     arrange(desc(TotalScore)) 
-  #   tmp <- tmp[1:rval_n(),]
-  # })
-  
-  # output$plot_questions_score <- renderPlot({
-  #   plot <- ggplot(questions_score(), aes(x = IndivTags)) + 
-  #     geom_line(aes(y = AvgScore, group = 1), color="red") +
-  #     geom_line(aes(y = TotalScore, group = 1), color="green") +
-  #     labs(title = paste0("Total Score and Average Score for Questions by Tags on ",
-  #                         dataset_name()," During ",date_diff_for_display()),
-  #          x = "date", y = "average number of days")
-  #   print(plot)
-  # })
-  
-  # how does score compare to ViewCount, CommentCount and FavoriteCount?
-  # score_vs_counts <- reactive({
-  #   tmp <- df_date_filtered() %>% 
-  #     select(CreationDate,Score,ViewCount,CommentCount,IndivTags) %>% 
-  #     distinct() %>% 
-  #     group_by(CreationDate,IndivTags) %>% 
-  #     mutate(
-  #       ratio_ViewCount = round(Score / ViewCount, 3),
-  #       ratio_CommentCount = case_when(
-  #         CommentCount == 0 ~ 0,
-  #         TRUE ~ round(Score / CommentCount, 3)
-  #       )
-  #     ) %>% 
-  #     ungroup()
-  # })
-  
-  # score_vs_comments <- reactive({
-  #   tmp1 <- score_vs_counts() %>% 
-  #     select(CreationDate,ratio_ViewCount,ratio_CommentCount) %>% 
-  #     distinct()
-  # })
-  # 
-  # output$plot_score_vs_comments <- renderPlot({
-  #   plot <- ggplot(score_vs_comments(), aes(x = CreationDate)) + 
-  #     # geom_line(aes(y = ratio_ViewCount, group = 1), color="red") +
-  #     geom_line(aes(y = ratio_CommentCount, group = 1), color="green") +
-  #     labs(title = paste0("Total Score and Average Score for Questions by Tags on ",dataset_name(),date_diff_for_display()),
-  #          x = "date", y = "average number of days")
-  #   print(plot)
-  # })
   
 }
 
