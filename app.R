@@ -26,7 +26,7 @@ ui <- fluidPage(
       dateRangeInput("dates", "Enter date range of StackExchange posts (for 'Time Series Analysis' tab):",
                      start = "2021-01-01", end = dataset_date,
                      max = dataset_date, format = "yyyy-mm-dd"),
-      downloadButton("download_Plot_top_tag_per_year","download me!")
+      downloadButton("download_plot_questions_timeseries","download me!")
     ),
     mainPanel(
       tabsetPanel(
@@ -89,12 +89,12 @@ server <- function(input, output) {
     plot1()
   })
   
-  output$download_Plot_top_tag_per_year <- downloadHandler(
-    filename = function() {'top_tag_per_yr.png'},
-    content = function(file) {
-      ggsave(file, plot = plot1(), device = "png")
-    }
-  )
+  # output$download_Plot_top_tag_per_year <- downloadHandler(
+  #   filename = function() {'top_tag_per_yr.png'},
+  #   content = function(file) {
+  #     ggsave(file, plot = plot1(), device = "png")
+  #   }
+  # )
   # output$download_Plot_top_tag_per_year <- downloadHandler(
   #   filename = "top_tag_per_yr.png" ,
   #   content = function(file) {
@@ -169,16 +169,30 @@ server <- function(input, output) {
   n_closed_questions <- reactive({sum(questions_timeseries()$question_closed_or_not)})
   percent_closed <- reactive({round((n_closed_questions() / n_total_questions()) * 100, 2)})
   
-  output$plot_questions_timeseries <- renderPlot({
-    plot <- ggplot(questions_timeseries(), aes(x = CreationDate, y = n_questions_per_day)) + 
+  ggplot_questions_timeseries <- reactive({
+    ggplot(questions_timeseries(), aes(x = CreationDate, y = n_questions_per_day)) + 
       geom_line() +
       geom_smooth(method="lm", se=FALSE) +
       labs(title = paste0("Number of Questions Asked on ",dataset_name(),
                           date_diff_for_display()), 
            x = "date", y = "number of questions",
            subtitle = paste0(n_closed_questions()," / ",n_total_questions()," questions closed (",percent_closed(),"%)"))
-    print(plot)
   })
+  output$plot_questions_timeseries <- renderPlot({
+    ggplot_questions_timeseries()
+  })
+  output$download_plot_questions_timeseries <- downloadHandler(
+    filename = function() {'top_tag_per_yr.png'},
+    content = function(file) {
+      ggsave(file, plot = ggplot_questions_timeseries(), 
+             width = 700, height = 300, units = "mm", device = "png")
+    }
+  )
+  # output$download_Plot_top_tag_per_year <- downloadHandler(
+  #   filename = "top_tag_per_yr.png" ,
+  #   content = function(file) {
+  #     ggsave(plot1(), filename = file)
+  #   })
   
   # what is the average duration between CreationDate and [LastEditDate | LastActivityDate | ClosedDate]?
   avg_duration_between_dates <- reactive({
