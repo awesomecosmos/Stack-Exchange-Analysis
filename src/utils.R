@@ -18,16 +18,25 @@ dataset_reader <- function(path){
 
 # function to clean raw dataframe
 clean_df <- function(raw_df){
-  df <- raw_df %>% 
-    select(c(CreationDate,Score,AnswerCount,CommentCount,Tags)) %>% 
+  df <- raw %>% 
+    select(CreationDate,LastEditDate,LastActivityDate,ClosedDate,
+           OwnerUserId,Body,Score,ViewCount,CommentCount,FavoriteCount,
+           AnswerCount,CommentCount,Tags) %>%
     distinct() %>% 
+    mutate(
+      CreationDate = as.Date(as.POSIXct(CreationDate)),
+      LastEditDate = as.Date(as.POSIXct(LastEditDate)),
+      LastActivityDate = as.Date(as.POSIXct(LastActivityDate)),
+      ClosedDate = as.Date(as.POSIXct(ClosedDate)),
+      year = substring(CreationDate,1,4)
+    ) %>% 
     filter(!is.na(Tags)) %>% 
-    mutate(year = substring(CreationDate,1,4)) %>% 
     mutate(IndivTags = str_split(Tags,">")) %>% 
     unnest(IndivTags) %>% 
     filter(IndivTags != "") %>% 
     mutate(IndivTags = str_replace(IndivTags,"<","")) %>% 
     distinct()
+  
   return(df)
 }
 
@@ -35,7 +44,7 @@ clean_df <- function(raw_df){
 plot_top_n_tags_by_count <- function(df,df.x,df.y,dataset_name,n){
   plot <- ggplot(df, aes(x = reorder(df.x, -df.y), y = df.y)) + 
     geom_col(fill = "blueviolet") + 
-    labs(title = paste0("Top ",n," Tags for ",dataset_name), x = "tag", y = "frequency") +
+    labs(title = paste0("Top ",n," Tags on ",dataset_name), x = "tag", y = "frequency") +
     theme(axis.text.x = element_text(angle = 45,  hjust=1))
   print(plot)
 }
@@ -44,7 +53,7 @@ plot_top_n_tags_by_count <- function(df,df.x,df.y,dataset_name,n){
 plot_top_tag_per_year <- function(df,df.x,df.y,df.fill,dataset_name,n){
   plot <- ggplot(df, aes(x = df.x, y = df.y, fill = df.fill)) + 
     geom_col() +
-    labs(title = paste0("Top Yearly Tag for ",dataset_name), x = "tag", y = "frequency",
+    labs(title = paste0("Top Yearly Tag on ",dataset_name), x = "year", y = "frequency",
          fill = "Tag")
   print(plot)
 }
@@ -53,7 +62,7 @@ plot_top_tag_per_year <- function(df,df.x,df.y,df.fill,dataset_name,n){
 plot_top_n_tags_by_year <- function(df,df.x,df.y,df.group,df.color,dataset_name,n){
   plot <- ggplot(df, aes(x = df.x, y = df.y, group = df.group, color = df.color)) + 
     geom_line() +
-    labs(title = paste0("Top ",n," Tags for ",dataset_name," Over Time"), x = "tag", y = "frequency",
+    labs(title = paste0("Top ",n," Tags on ",dataset_name," Over Time"), x = "year", y = "frequency",
          color = "Tag")
   print(plot)
 }

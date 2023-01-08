@@ -47,3 +47,11 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+########################################################
+# USER-DEFINED GITIGNORES
+########################################################
+
+# ignore data folder and all data contained within 
+data/
+data/rds/
