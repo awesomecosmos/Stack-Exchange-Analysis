@@ -5,6 +5,7 @@ library(stringr)
 library(ggplot2)
 library(here)
 library(shiny)
+library(rsconnect)
 
 source("src/utils.R")
 
