@@ -55,3 +55,4 @@ rsconnect/
 # ignore data folder and all data contained within 
 data/
 data/rds/
+.DS_Store
