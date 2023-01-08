@@ -2,10 +2,13 @@
  
 This is a project designed to explore and visualize data from the [Stack Exchange Data Explorer](https://data.stackexchange.com/) website, in an [interactive RShiny applet](https://awesomecosmos.shinyapps.io/stack-overflow-analysis/).
 
+<img src="assets/stackexchange.png">
+
 ## Table of Contents
   * [Motivation](#motivation)
   * [The Data](#the-data)
   * [The Code](#the-code)
+  * [Demo of App!](#demo)
   * [You Want To Contribute?](#you-want-to-contribute)
 
 ## Motivation
@@ -30,9 +33,21 @@ To view and explore the datasets, I created an [app](https://awesomecosmos.shiny
 3. Click on the ```Stack-Overflow-Analysis.Rproj``` file. This should open RStudio with all files in this repository already loaded.
 4. Run the file ```app.R```. Enjoy!
 
+## Demo
+
+You can change the selected dataset, and number of displayed data points, like so:
+
+<img src="assets/dataset_change_and_n_points_demo.gif">
+
+On the 'Time Series' tab, you can change the time range to view the overall trends for the selected dataset over a longer or shorter period of time.
+
+<img src="assets/time_series_demo.gif">
+
+You can also download plots for your own analysis using the 'Download plot' buttons below each plot! This saves the plots as a png image.
+
 ## You Want To Contribute?
 Excellent! Some ways you could contribute:
 - download more datasets from [Stack Exchange Data Explorer](https://data.stackexchange.com/) to use for this app
 - create an issue for a feature you want to see
 - create an issue for any type of analysis you want to see here
-- ...
+- etc!
