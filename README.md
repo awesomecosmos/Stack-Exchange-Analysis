@@ -1,6 +1,6 @@
 # Stack-Overflow-Analysis
  
-This is a project designed to explore and visualize data from the [Stack Exchange Data Explorer](https://data.stackexchange.com/) website, in an [interactive RShiny applet](https://awesomecosmos.shinyapps.io/stack-overflow-analysis/).
+This is a project designed to explore and visualize data from the [Stack Exchange Data Explorer](https://data.stackexchange.com/) website, in an [interactive RShiny applet](https://awesomecosmos.shinyapps.io/stack-overflow-analysis/). I also wrote a [blog post](https://medium.com/@aayushi_verma/an-analysis-of-the-stack-exchange-network-through-an-interactive-rshiny-web-app-931c43cdfd9e) about this project!
 
 <img src="assets/stackexchange.png">
 
